@@ -1,16 +1,23 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(achq)
 
+
+add_compile_options(-std=c++11)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  tf
   sensor_msgs
   std_msgs
   ur_driver
   actionlib
   control_msgs
+  moveit_core
+  moveit_ros_move_group
+  moveit_ros_planning_interface
 )
 
 ## System dependencies are found with CMake's conventions
@@ -54,11 +61,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+   FILES
+   HandoverPlanningSrv.srv
+ )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -68,10 +74,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   sensor_msgs#   std_msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   trajectory_msgs
+   geometry_msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -103,7 +110,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES achq
 #  CATKIN_DEPENDS roscpp sensor_msgs std_msgs ur_driver
 #  DEPENDS system_lib
@@ -116,23 +123,26 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
+message( STATUS "******Catkin include dirs: ${catkin_INCLUDE_DIRS} " )
 include_directories(
+  ${PROJECT_SOURCE_DIR}/include
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(achq
-#   src/${PROJECT_NAME}/achq.cpp
-# )
+add_library( ur5_base_move src/GoalSender.cpp src/ur5_base_arm_planner.cpp )
+target_link_libraries( ur5_base_move ${catkin_LIBRARIES} )
 
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(achq ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Declare a C++ executable
 add_executable( ur5_test_1 src/ur5_test_1.cpp)
 target_link_libraries( ur5_test_1 ${catkin_LIBRARIES} )
+
+add_executable( ur5_test_2 src/ur5_test_2.cpp)
+target_link_libraries( ur5_test_2 ur5_base_move ${catkin_LIBRARIES} )
+
+
+add_executable( server_planning_arm_v1 src/server_planning_arm_v1.cpp)
+target_link_libraries( server_planning_arm_v1 ur5_base_move ${catkin_LIBRARIES} )
+
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

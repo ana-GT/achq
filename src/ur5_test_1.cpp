@@ -23,6 +23,9 @@ class ur5_interact {
   ros::NodeHandle* mNh;
   actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction>* mTrajClient;
   sensor_msgs::JointState mJointState;
+  std::vector<unsigned int> mJointOrder;
+  std::vector<std::string> mJointNames;
+  bool bSetOrder;
 };
 
 /**
@@ -32,12 +35,23 @@ class ur5_interact {
 ur5_interact::ur5_interact( ros::NodeHandle* _nh ) {
    
   mNh = _nh;
-  mTrajClient = new actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction>("follow_joint_trajectory", true);     
+  mTrajClient = new actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction>("/arm_controller/follow_joint_trajectory", true);     
 
   ROS_INFO("Waiting for action server to start.");
   mTrajClient->waitForServer(); //will wait for infinite time
   ROS_INFO("Action server started!");
 
+  //
+  mJointNames.resize(6);
+  mJointNames[0] = std::string("shoulder_pan_joint");
+  mJointNames[1] = std::string("shoulder_lift_joint");
+  mJointNames[2] = std::string("elbow_joint");
+  mJointNames[3] = std::string("wrist_1_joint");
+  mJointNames[4] = std::string("wrist_2_joint");
+  mJointNames[5] = std::string("wrist_3_joint");
+
+  bSetOrder = false;
+  mJointOrder.resize(6);
 }
 
 /**
@@ -48,6 +62,19 @@ void ur5_interact::joint_states_cb(const sensor_msgs::JointState::ConstPtr& msg)
       ROS_INFO("Joint [%s]: %f", msg->name[i].c_str(), msg->position[i] );
     }*/
     mJointState = *msg;
+
+    if( !bSetOrder ) {
+      for( int i = 0; i < 6; ++i ) {
+        for( int j = 0; j < msg->name.size(); ++j ) {
+          if( msg->name[j].compare( mJointNames[i] ) == 0 ) {
+            mJointOrder[i] = j;
+            break;
+          } // if
+        } // for j
+      } // for i
+      bSetOrder = true;
+    } // if bSetOrder
+
 }
 
 /**
@@ -69,12 +96,11 @@ void ur5_interact::test_move_wrist() {
   p0.time_from_start = ros::Duration(0.0);
 
   p1 = p0;
-  p1.positions[5] += 0.15;
+  p1.positions[mJointOrder[5]] += 0.1;
   p1.time_from_start = ros::Duration(2.0);
 
   p2 = p1;
-  p2.positions[3] += 0.1;
-  p2.positions[2] += 0.1;
+  p2.positions[mJointOrder[5]] += 0.1;
   p2.time_from_start = ros::Duration(4.0);
 
   msg.trajectory.points[0] = p0;

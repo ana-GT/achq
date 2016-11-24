@@ -32,3 +32,8 @@ roslaunch ur5_moveit_config moveit_rviz.launch config:=true
 PS.- Hand (I COULDN'T INSTALL SOEM FOR ROBOTIQ, so...)
 
 
+Simulation
+------------
+roscore
+roslaunch ur_gazebo ur5.launch
+

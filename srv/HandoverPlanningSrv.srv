@@ -1,0 +1,6 @@
+geometry_msgs/PointStamped user_centroid_3D
+---
+trajectory_msgs/JointTrajectory trajectory
+trajectory_msgs/JointTrajectory backwards_trajectory
+bool success
+
